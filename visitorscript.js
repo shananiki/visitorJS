@@ -1,29 +1,16 @@
-document.addEventListener('DOMContentLoaded', () => {
-    const totalVisitorsSpan = document.getElementById('total-visitors');
-    const currentVisitorsSpan = document.getElementById('current-visitors');
-    
-    let wsv;
-    
-    function connect() {
-        const wsv = new WebSocket(`${location.protocol === 'http:' ? 'ws:' : 'wss:'}//cursor.shananiki.org` + ':21000');
-    
-        wsv.onopen = () => {
-            console.log("Connected to WebSocket server!");
+const totalVisitorsSpan = document.getElementById('total-visitors');
+const currentVisitorsSpan = document.getElementById('current-visitors');
+let wsv;
+function connect() {
+        const ws = new WebSocket('wss://HOSTNAME:30000');
+
+        ws.onmessage = (message) => {
+            const data = JSON.parse(message.data);
+            if (data.type === 'visitors') {
+                document.getElementById('current-visitors').innerText = data.current;
+                document.getElementById('total-visitors').innerText = data.all;
+            }
         };
-    
-        wsv.onmessage = (event) => {
-        const data = JSON.parse(event.data);
-        if (data.type === 'visitors') {
-            totalVisitorsSpan.textContent = data.allVisitors;
-            currentVisitorsSpan.textContent = data.currentVisitors;
-        }
-        };
-    
-        wsv.onerror = (error) => {
-            console.error("WebSocket error:", error);
-        };
-    }
-    
-    connect();
-});
-    
+
+}
+window.onload = connect;
