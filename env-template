@@ -1,3 +1,8 @@
-CERT_PATH=FULLCHAIN.PEM CERTIFICATE
-KEY_PATH=PRIV KEY FOR SSL
-PORT=SERVER PORT HERE
+CERT_PATH=/etc/letsencrypt/live/cursor.shananiki.org/fullchain.pem
+KEY_PATH=/etc/letsencrypt/live/cursor.shananiki.org/privkey.pem
+HOST_PORT=30000
+HOST_IP=0.0.0.0
+DB_HOST=x.x.x.x
+DB_DATABASE=visitors
+DB_PASSWORD=
+DB_USER=nodejs

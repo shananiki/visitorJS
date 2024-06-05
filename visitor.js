@@ -1,67 +1,48 @@
 require ('dotenv').config();
-const express = require('express');
-const http = require('http');
 const https = require('https');
-const WebSocket = require('ws');
 const fs = require('fs');
-const cors = require('cors');
-
+const WebSocket = require('ws');
 const app = express();
 
-// dotenv
-const port = process.env.PORT;
-var CERT_FILE = process.env.CERT_PATH;
-var KEY_FILE = process.env.KEY_PATH;
+var CERT_PATH = process.env.CERT_PATH;
+var KEY_PATH = process.env.KEY_PATH;
+var HOST_PORT = process.env.HOST_PORT;
+var HOST_IP = process.env.HOST_IP;
 
-const credentials = {
-    cert: fs.readFileSync(CERT_FILE),
-    key: fs.readFileSync(KEY_FILE)
-};
+const server = https.createServer({
+    cert: fs.readFileSync(CERT_PATH),
+    key: fs.readFileSync(KEY_PATH)
+});
 
-// CORS setup
-const corsOptions = {
-    origin: 'https://cursor.shananiki.org',
-    methods: ['GET', 'POST'],
-    allowedHeaders: ['Content-Type'],
-    credentials: true
-};
-app.use(cors(corsOptions));
-
-// Create HTTPS server
-const server = https.createServer(credentials, app);
 const wss = new WebSocket.Server({ server });
-
-let cursors = {}; // To store cursor positions of all clients
 
 let currentVisitors = 0;
 let allVisitors = 0;
+function broadcastVisitors() {
+        const data = JSON.stringify({ type: 'visitors', all: allVisitors, current: currentVisitors });
+        wss.clients.forEach(client => {
+        if(client.readyState === WebSocket.OPEN) {
+                client.send(data);
+        }
+        });
+
+}
 
 wss.on('connection', (ws) => {
-    allVisitors++;
     currentVisitors++;
-   
+    allVisitors++;
+    console.log(`New connection. Current visitors: ${currentVisitors}`);
 
-    ws.send(JSON.stringify({ type: 'welcome', message: "You're a visitor!" }));
-
-    ws.on('error', console.error);
-    
     broadcastVisitors();
+
 
     ws.on('close', () => {
         currentVisitors--;
+        console.log(`Connection closed. Current visitors: ${currentVisitors}`);
         broadcastVisitors();
     });
 });
 
-function broadcastVisitors() {
-    const data = JSON.stringify({ type: 'visitors', allVisitors, currentVisitors });
-    wss.clients.forEach(client => {
-        if (client.readyState === WebSocket.OPEN) {
-            client.send(data);
-        }
-    });
-}
-
-server.listen(port, () => {
-    console.log(`Server running at http://localhost:${port}`);
+server.listen(HOST_PORT, HOST_IP, () => {
+    console.log('Secure WebSocket server is running on wss://[::]:30000');
 });
